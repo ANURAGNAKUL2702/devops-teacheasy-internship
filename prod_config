@@ -1,0 +1,4 @@
+REPO_URL="https://github.com/ANURAGNAKUL2702/devops-teacheasy-internship"
+INSTANCE_TYPE="t3.medium"
+INSTALL_PACKAGES="nodejs npm git nginx"
+SHUTDOWN_MINUTES=30
