@@ -1,4 +1,4 @@
-REPO_URL="https://github.com/ANURAGNAKUL2702/devops-teacheasy-internship"
+REPO_URL="https://github.com/Trainings-TechEazy/test-repo-for-devops"
 INSTANCE_TYPE="t2.micro"
 INSTALL_PACKAGES="nodejs npm git"
 SHUTDOWN_MINUTES=20
