@@ -22,7 +22,8 @@ echo "🔗 Using Repo: $REPO_URL"
 echo "📦 Instance Type: ${INSTANCE_TYPE:-t2.micro}"
 
 # Parse repo name
-REPO_NAME=$(basename "$REPO_URL" .git)
+REPO_NAME=$(basename "$REPO" .git | tr -d '\r')
+
 
 # Clone or pull latest code
 if [ -d "$REPO_NAME" ]; then
