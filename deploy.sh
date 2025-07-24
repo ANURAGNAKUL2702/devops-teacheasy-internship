@@ -44,10 +44,10 @@ mvn clean package
 echo "🚀 Starting Spring MVC App..."
 nohup java -jar target/*.jar > app.log 2>&1 &
 
-# Schedule auto-shutdown
+# ⏲️ Schedule EC2 auto-shutdown in 20 minutes
 echo "💤 Auto-shutdown in 20 minutes..."
-nohup bash -c "sleep 1200 && shutdown -h now" >/dev/null 2>&1 || echo "⚠️ Failed to schedule shutdown"
-echo "✅ Auto-shutdown scheduled."
+nohup bash -c "sleep 1200 && sudo shutdown -h now" >/dev/null 2>&1 || echo "⚠️ Failed to schedule shutdown"
+
 
 
 echo "✅ Auto-shutdown scheduled. Deployment complete."
