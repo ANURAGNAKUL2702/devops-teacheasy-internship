@@ -46,7 +46,9 @@ nohup java -jar target/*.jar > app.log 2>&1 &
 
 # Schedule auto-shutdown
 echo "💤 Auto-shutdown in 20 minutes..."
-sudo shutdown -h +20 || echo "⚠️ Failed to schedule shutdown"
+nohup bash -c "sleep 1200 && shutdown -h now" >/dev/null 2>&1 || echo "⚠️ Failed to schedule shutdown"
+echo "✅ Auto-shutdown scheduled."
+
 
 echo "✅ Auto-shutdown scheduled. Deployment complete."
 echo "🎉 Deployment finished for stage: $STAGE"
