@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./deploy.sh dev_config OR ./deploy.sh prod_config
+# Usage: ./deploy.sh dev_config OR ./deploy.sh prod_config..
 CONFIG_FILE="$1"
 
 if [ -z "$CONFIG_FILE" ]; then
