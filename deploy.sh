@@ -1,63 +1,52 @@
 #!/bin/bash
 
+# Usage: ./deploy.sh Dev
 STAGE=$1
+CONFIG_FILE="${STAGE,,}_config"  # Converts to lowercase
 
-if [ -z "$STAGE" ]; then
-    echo "❗ Please provide stage: Dev or Prod"
-    echo "👉 Example: ./deploy.sh Dev"
-    exit 1
-fi
-
-CONFIG_FILE="${STAGE,,}_config"
-
-if [ ! -f "$CONFIG_FILE" ]; then
-    echo "❌ Config file '$CONFIG_FILE' not found."
-    exit 1
-fi
-
-source "$CONFIG_FILE"
 echo "✅ Loaded configuration from '$CONFIG_FILE'"
 
-# Default Values
-REPO_URL="${REPO_URL:-https://github.com/sample/repo.git}"
-INSTANCE_TYPE="${INSTANCE_TYPE:-t2.micro}"
-DEPENDENCIES="${DEPENDENCIES:-git curl nodejs}"
-SHUTDOWN_MINUTES="${SHUTDOWN_MINUTES:-20}"
+# Load config
+if [ ! -f "$CONFIG_FILE" ]; then
+  echo "❌ Config file '$CONFIG_FILE' not found!"
+  exit 1
+fi
+source "$CONFIG_FILE"
 
 echo "🚀 Starting deployment for stage: $STAGE"
-echo "📦 Using instance type: $INSTANCE_TYPE"
+echo "📦 Using instance type: ${INSTANCE_TYPE:-t2.micro}"
 echo "🔗 Cloning repo: $REPO_URL"
 
-# Clone Repo
-if [ ! -d "$(basename "$REPO_URL" .git)" ]; then
-    git clone "$REPO_URL"
+# Only clone if directory doesn't exist
+DIR_NAME=$(basename "$REPO_URL" .git)
+if [ -d "$DIR_NAME" ]; then
+  echo "⚠️ Directory '$DIR_NAME' already exists. Skipping clone."
 else
-    echo "ℹ️ Repo already cloned. Skipping..."
+  git clone "$REPO_URL"
 fi
 
-# Install Dependencies (Detect OS)
-echo "📦 Installing dependencies: $DEPENDENCIES"
-if command -v yum &> /dev/null; then
-    echo "🟡 Detected Amazon Linux. Using yum..."
-    sudo yum update -y
-    sudo yum install -y $DEPENDENCIES
-elif command -v apt-get &> /dev/null; then
-    echo "🟢 Detected Ubuntu/Debian. Using apt-get..."
-    sudo apt-get update -y
-    sudo apt-get install -y $DEPENDENCIES
+# Install required packages
+echo "📦 Installing dependencies: git curl nodejs"
+if grep -q "Amazon Linux" /etc/os-release; then
+  echo "🟡 Detected Amazon Linux. Using yum..."
+  sudo yum install -y git curl nodejs maven java-21-amazon-corretto
 else
-    echo "❌ Unsupported OS. Please install dependencies manually."
-    exit 1
+  echo "🛑 Unsupported OS"
+  exit 1
 fi
 
-# Auto-Shutdown Setup
-echo "⏳ Setting auto-shutdown in $SHUTDOWN_MINUTES minutes..."
-if command -v systemd-run &> /dev/null; then
-    sudo systemd-run --on-active=${SHUTDOWN_MINUTES}m --unit=auto-shutdown /sbin/poweroff
-    echo "✅ Auto-shutdown scheduled via systemd-run."
-else
-    echo "⚠️ systemd-run not found. Skipping auto-shutdown."
-fi
+# Enter repo folder
+cd "$DIR_NAME" || exit
 
-# Done
+echo "🛠️ Building with Maven..."
+mvn clean package
+
+echo "🚀 Starting Spring MVC App..."
+nohup java -jar target/*.jar > app.log 2>&1 &
+
+# Schedule auto-shutdown
+echo "💤 Auto-shutdown in 20 minutes..."
+sudo shutdown -h +20 || echo "⚠️ Failed to schedule shutdown"
+
+echo "✅ Auto-shutdown scheduled. Deployment complete."
 echo "🎉 Deployment finished for stage: $STAGE"
