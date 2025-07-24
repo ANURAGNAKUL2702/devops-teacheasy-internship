@@ -1,51 +1,62 @@
 #!/bin/bash
 
-# Usage: ./deploy.sh Dev
-STAGE=$1
+# Usage: ./deploy.sh dev_config OR ./deploy.sh prod_config
 CONFIG_FILE="$1"
-  # Converts to lowercase
 
-echo "✅ Loaded configuration from '$CONFIG_FILE'"
+if [ -z "$CONFIG_FILE" ]; then
+  echo "❌ Please provide the config file (e.g., dev_config or prod_config)"
+  exit 1
+fi
 
 # Load config
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "❌ Config file '$CONFIG_FILE' not found!"
   exit 1
 fi
+
 source "$CONFIG_FILE"
 
-echo "🚀 Starting deployment for stage: $STAGE"
-echo "📦 Using instance type: ${INSTANCE_TYPE:-t2.micro}"
-echo "🔗 Cloning repo: $REPO_URL"
+echo "✅ Loaded configuration from '$CONFIG_FILE'"
+echo "🚀 Starting deployment for STAGE: ${STAGE:-Unknown}"
+echo "🔗 Using Repo: $REPO_URL"
+echo "📦 Instance Type: ${INSTANCE_TYPE:-t2.micro}"
 
-# Only clone if directory doesn't exist
-DIR_NAME=$(basename "$REPO_URL" .git)
-if [ -d "$DIR_NAME" ]; then
-  echo "⚠️ Directory '$DIR_NAME' already exists. Skipping clone."
+# Clone Repo
+REPO_NAME=$(basename "$REPO_URL" .git)
+if [ -d "$REPO_NAME" ]; then
+  echo "⚠️ Directory '$REPO_NAME' already exists. Skipping clone."
 else
   git clone "$REPO_URL"
+  if [ $? -ne 0 ]; then
+    echo "❌ Failed to clone repository."
+    exit 1
+  fi
 fi
 
-# Install required packages
-echo "📦 Installing dependencies: git curl nodejs maven java"
+# Install dependencies (Amazon Linux only)
+echo "📦 Installing dependencies..."
 if grep -qi "Amazon Linux" /etc/os-release; then
-  echo "🟡 Detected Amazon Linux. Using yum..."
+  sudo yum update -y
   sudo yum install -y git curl nodejs maven java-21-amazon-corretto
 else
-  echo "🛑 Unsupported OS"
+  echo "🛑 Unsupported OS. Aborting."
   exit 1
 fi
 
-# Enter repo folder
-cd "$DIR_NAME" || exit
-
-echo "🛠️ Building with Maven..."
+# Build App
+cd "$REPO_NAME" || exit
+echo "🛠️ Building Spring MVC App with Maven..."
 mvn clean package
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed!"
+  exit 1
+fi
 
-echo "🚀 Starting Spring MVC App..."
+# Run App
+echo "🚀 Starting Spring App..."
 nohup java -jar target/*.jar > app.log 2>&1 &
 
-# ✅ Auto-shutdown after 20 minutes
+# Auto shutdown in 20 minutes
 echo "💤 Scheduling auto-shutdown in 20 minutes..."
 nohup bash -c "sleep 1200 && sudo shutdown -h now" > /dev/null 2>&1 &
 if [ $? -eq 0 ]; then
@@ -54,4 +65,5 @@ else
   echo "⚠️ Failed to schedule auto-shutdown."
 fi
 
-echo "🎉 Deployment finished for stage: $STAGE"
+echo "🎉 Deployment complete. App will be available at:"
+echo "🔗 http://<YOUR_EC2_PUBLIC_IP>/hello"
