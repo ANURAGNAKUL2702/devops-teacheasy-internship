@@ -52,13 +52,12 @@ fi
 
 # Auto-Shutdown Setup
 echo "⏳ Setting auto-shutdown in $SHUTDOWN_MINUTES minutes..."
-if command -v shutdown &> /dev/null; then
-    sudo shutdown -h +$SHUTDOWN_MINUTES || echo "⚠️ Failed to schedule shutdown"
+if command -v systemd-run &> /dev/null; then
+    sudo systemd-run --on-active=${SHUTDOWN_MINUTES}m --unit=auto-shutdown /sbin/poweroff
+    echo "✅ Auto-shutdown scheduled via systemd-run."
 else
-    echo "⚠️ Shutdown command not found. Skipping auto-shutdown."
+    echo "⚠️ systemd-run not found. Skipping auto-shutdown."
 fi
-
-echo "✅ Auto-shutdown scheduled. Deployment complete."
 
 # Done
 echo "🎉 Deployment finished for stage: $STAGE"
