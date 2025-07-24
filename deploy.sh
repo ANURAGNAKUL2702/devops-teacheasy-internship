@@ -26,8 +26,8 @@ else
 fi
 
 # Install required packages
-echo "📦 Installing dependencies: git curl nodejs"
-if grep -q "Amazon Linux" /etc/os-release; then
+echo "📦 Installing dependencies: git curl nodejs maven java"
+if grep -qi "Amazon Linux" /etc/os-release; then
   echo "🟡 Detected Amazon Linux. Using yum..."
   sudo yum install -y git curl nodejs maven java-21-amazon-corretto
 else
@@ -44,11 +44,13 @@ mvn clean package
 echo "🚀 Starting Spring MVC App..."
 nohup java -jar target/*.jar > app.log 2>&1 &
 
-# ⏲️ Schedule EC2 auto-shutdown in 20 minutes
-echo "💤 Auto-shutdown in 20 minutes..."
-nohup bash -c "sleep 1200 && sudo shutdown -h now" >/dev/null 2>&1 || echo "⚠️ Failed to schedule shutdown"
+# ✅ Auto-shutdown after 20 minutes
+echo "💤 Scheduling auto-shutdown in 20 minutes..."
+nohup bash -c "sleep 1200 && sudo shutdown -h now" > /dev/null 2>&1 &
+if [ $? -eq 0 ]; then
+  echo "✅ Auto-shutdown scheduled."
+else
+  echo "⚠️ Failed to schedule auto-shutdown."
+fi
 
-
-
-echo "✅ Auto-shutdown scheduled. Deployment complete."
 echo "🎉 Deployment finished for stage: $STAGE"
