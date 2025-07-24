@@ -21,10 +21,15 @@ echo "🚀 Starting deployment for STAGE: ${STAGE:-Unknown}"
 echo "🔗 Using Repo: $REPO_URL"
 echo "📦 Instance Type: ${INSTANCE_TYPE:-t2.micro}"
 
-# Clone Repo
+# Parse repo name
 REPO_NAME=$(basename "$REPO_URL" .git)
+
+# Clone or pull latest code
 if [ -d "$REPO_NAME" ]; then
-  echo "⚠️ Directory '$REPO_NAME' already exists. Skipping clone."
+  echo "⚠️ Directory '$REPO_NAME' already exists. Pulling latest changes..."
+  cd "$REPO_NAME" || exit 1
+  git pull origin main || git pull origin master
+  cd ..
 else
   git clone "$REPO_URL"
   if [ $? -ne 0 ]; then
@@ -65,5 +70,7 @@ else
   echo "⚠️ Failed to schedule auto-shutdown."
 fi
 
+# Show public IP
+PUBLIC_IP=$(curl -s http://checkip.amazonaws.com)
 echo "🎉 Deployment complete. App will be available at:"
-echo "🔗 http://<YOUR_EC2_PUBLIC_IP>/hello"
+echo "🔗 http://$PUBLIC_IP/hello"
