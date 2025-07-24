@@ -21,4 +21,4 @@ This project contains a simple, configurable, and secure deployment script for l
 ├── deploy.sh          # Main deployment script
 ├── dev_config         # Dev environment config
 ├── prod_config        # Prod environment config
-└── README.md          # This file
+└── README.md          # This file.
