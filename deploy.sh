@@ -2,7 +2,8 @@
 
 # Usage: ./deploy.sh Dev
 STAGE=$1
-CONFIG_FILE="${STAGE,,}_config"  # Converts to lowercase
+CONFIG_FILE="$1"
+  # Converts to lowercase
 
 echo "✅ Loaded configuration from '$CONFIG_FILE'"
 
